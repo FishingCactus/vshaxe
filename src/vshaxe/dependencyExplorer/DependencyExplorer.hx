@@ -6,6 +6,7 @@ import vscode.*;
 import js.Promise;
 import vshaxe.dependencyExplorer.DependencyResolver;
 import vshaxe.dependencyExplorer.HxmlParser;
+import vshaxe.helper.PathHelper;
 using Lambda;
 using vshaxe.helper.ArrayHelper;
 
@@ -39,6 +40,7 @@ class DependencyExplorer {
         context.subscriptions.push(hxmlFileWatcher);
 
         context.subscriptions.push(workspace.onDidChangeConfiguration(onDidChangeConfiguration));
+        context.subscriptions.push(window.onDidChangeActiveTextEditor(onDidChangeActiveTextEditor));
         haxePath = getHaxePath();
     }
 
@@ -54,6 +56,26 @@ class DependencyExplorer {
         if (haxePath != getHaxePath()) {
             haxePath = getHaxePath();
             refresh();
+        }
+    }
+
+    function onDidChangeActiveTextEditor(editor:TextEditor) {
+        if (editor == null) return;
+
+        function loop(nodes:Array<Node>):Bool {
+            var anyMatches = false;
+            for (node in nodes) {
+                if (node.isDirectory && PathHelper.containsFile(node.path, editor.document.fileName)) {
+                    anyMatches = true;
+                    node.expand();
+                    loop(node.children);
+                }
+            }
+            return anyMatches;
+        }
+
+        if (loop(dependencyNodes)) {
+            _onDidChangeTreeData.fire();
         }
     }
 

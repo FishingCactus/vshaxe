@@ -23,6 +23,12 @@ class Node extends TreeItem {
         };
     }
 
+    public function expand() {
+        if (collapsibleState != None) {
+            collapsibleState = Expanded;
+        }
+    }
+
     public function collapse() {
         if (collapsibleState != None) {
             collapsibleState = Collapsed;
